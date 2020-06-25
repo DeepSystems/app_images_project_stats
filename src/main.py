@@ -1,4 +1,3 @@
-import os
 import supervisely_lib as sly
 
 my_app = sly.AppService()
