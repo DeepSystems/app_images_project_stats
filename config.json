@@ -1,0 +1,6 @@
+{
+	"name": "Report: images project stats",
+	"description": "Calculates dilated stats for images project",
+	"init_script": "src/main.py",
+	"docker_image": "docker.deepsystems.io/supervisely/five/app_report"
+}
