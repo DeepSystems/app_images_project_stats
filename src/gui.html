@@ -1,4 +1,20 @@
 <div>
-    <div>Generated string: {{data.randomString}}</div>
-    <el-button type="primary" style="margin-top:10px;" @click="command('generate')">Generate new string</el-button>
+    <card title="Statistics" subtitle="Detailed statistics for every image" style="height:100%">
+        <!--<div slot="header" class="fflex">-->
+          <!--&lt;!&ndash;<el-progress v-if="state.runClicked" style="width: 150px" :percentage="data.progress"></el-progress>&ndash;&gt;-->
+            <!--&lt;!&ndash;<el-button v-if="!state.needStop"&ndash;&gt;-->
+                       <!--&lt;!&ndash;size="small"&ndash;&gt;-->
+                       <!--&lt;!&ndash;:loading="state.runClicked"&ndash;&gt;-->
+                       <!--&lt;!&ndash;@click="state.runClicked = true; command('/workdir/srс/extract_fg_mask.py')">&ndash;&gt;-->
+              <!--&lt;!&ndash;<i v-if="!state.runClicked" class="zmdi zmdi-play"></i><span v-else>Running...</span>&ndash;&gt;-->
+            <!--&lt;!&ndash;</el-button>&ndash;&gt;-->
+              <!--&lt;!&ndash;<el-button v-if="state.runClicked"&ndash;&gt;-->
+                         <!--&lt;!&ndash;size="small"&ndash;&gt;-->
+                         <!--&lt;!&ndash;:loading="state.stopClicked"&ndash;&gt;-->
+                         <!--&lt;!&ndash;@click="state.stopClicked = true">&ndash;&gt;-->
+                <!--&lt;!&ndash;<i v-if="!state.needStop" class="zmdi zmdi-stop"></i><span v-else>Stopping...</span>&ndash;&gt;-->
+              <!--&lt;!&ndash;</el-button>&ndash;&gt;-->
+        <!--</div>-->
+        <sly-table :options="{ perPage: state.perPage, pageSizes: state.pageSizes }" :content="data.table"></sly-table>
+    </card>
 </div>

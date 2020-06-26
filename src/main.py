@@ -11,13 +11,19 @@ def generate_random_string(api: sly.Api, task_id, context, state):
 
 
 def main():
+    table = []
+    for i in range(10):
+        table.append({"name": sly.rand_str(5), "my_value": i})
+
     # data
     data = {
-        "randomString": "initial random value xxx"
+        "table": table
     }
 
     # state
     state = {
+        "perPage": 25,
+        "pageSizes": [25, 50, 100]
     }
 
     # Example:
