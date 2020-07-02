@@ -1,5 +1,7 @@
 from collections import defaultdict
 import numpy as np
+import pandas as pd
+import json
 
 import supervisely_lib as sly
 
@@ -17,7 +19,7 @@ def count_name(name):
 
 
 def color_name(name, color):
-    return '<b style="display: inline-block; border-radius: 50%; background: {}; width: 8px; height: 8px"></b> {}'.format(color, name)
+    return '<b style="display: inline-block; border-radius: 50%; background: {}; width: 8px; height: 8px"></b> {}'.format(sly.color.rgb2hex(color), name)
 
 
 def color_tag_name(name, color):
@@ -77,13 +79,17 @@ def calculate(api: sly.Api, task_id, context, state):
         tag_names.append(tag_meta.name)
         tag_colors.append(tag_meta.color)
 
+    # pandas dataframe columns orders
+    cols_ordered = ['id', 'name', 'dataset', 'height', 'width', 'channels', 'unlabeled area %', 'total count']
+    classes_cols = []
+    for name, color in zip(class_names, class_colors):
+        classes_cols.append(color_name(area_name(name), color))
+        classes_cols.append(color_name(count_name(name), color))
+    tags_cols = []
+    for name, color in zip(tag_names, tag_colors):
+        tags_cols.append(color_tag_name(name, color))
+
     total_images_count = api.project.get_images_count(project.id)
-
-    #total_images_in_project = 0
-    #stats_area = []
-    #stats_count = []
-    #stats_img_tags = []
-
     table_per_image_stats = []
     table_batch = []
     for dataset in api.dataset.get_list(project.id):
@@ -129,10 +135,21 @@ def calculate(api: sly.Api, task_id, context, state):
             ds_progress.iters_done_report(len(batch))
             table_per_image_stats.extend(table_batch)
 
+            # use pandas.dataframe to round floats and set columns order
+            df = pd.read_json(json.dumps(table_batch, cls=sly._utils.NpEncoder), orient='records')
+            df = df.round(1)
+
+            if len(tag_names) != 0:
+                df = df[[*cols_ordered, *classes_cols, *tags_cols]]
+            else:
+                df = df[[*cols_ordered, *classes_cols]]
+
+            processed_table_part = json.loads(df.to_json(orient='split'))
+
             # refresh table and progress
             payload = {
                 "progress": int(len(table_per_image_stats) / total_images_count * 100),
-                "tablePerImageStats": table_batch
+                "tablePerImageStats": processed_table_part
             }
             api.app.set_data(task_id, payload, "data", append=True)
 
