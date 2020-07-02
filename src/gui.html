@@ -15,6 +15,9 @@
                 <!--&lt;!&ndash;<i v-if="!state.needStop" class="zmdi zmdi-stop"></i><span v-else>Stopping...</span>&ndash;&gt;-->
               <!--&lt;!&ndash;</el-button>&ndash;&gt;-->
         <!--</div>-->
-        <sly-table :options="{ perPage: state.perPage, pageSizes: state.pageSizes }" :content="data.table"></sly-table>
+        <div slot="header" class="fflex">
+            <el-progress v-if="state.processingFlag" style="width: 150px" :percentage="data.progress"></el-progress>
+        </div>
+        <sly-table :options="{ perPage: state.perPage, pageSizes: state.pageSizes }" :content="data.tablePerImageStats"></sly-table>
     </card>
 </div>
