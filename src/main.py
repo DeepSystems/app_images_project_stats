@@ -2,6 +2,9 @@ from collections import defaultdict
 import numpy as np
 import pandas as pd
 import json
+import plotly.express as px
+import plotly.graph_objects as go
+import plotly.offline as po
 
 import supervisely_lib as sly
 
@@ -91,6 +94,8 @@ def calculate(api: sly.Api, task_id, context, state):
 
     total_images_count = api.project.get_images_count(project.id)
     table_per_image_stats = []
+    df_per_image_stats = None
+
     table_batch = []
     for dataset in api.dataset.get_list(project.id):
         images = api.image.get_list(dataset.id)
@@ -145,6 +150,10 @@ def calculate(api: sly.Api, task_id, context, state):
                 df = df[[*cols_ordered, *classes_cols]]
 
             processed_table_part = json.loads(df.to_json(orient='split'))
+            if df_per_image_stats is None:
+                df_per_image_stats = df
+            else:
+                df_per_image_stats = pd.concat([df_per_image_stats, df], ignore_index=True, sort=False)
 
             # refresh table and progress
             payload = {
@@ -153,23 +162,88 @@ def calculate(api: sly.Api, task_id, context, state):
             }
             api.app.set_data(task_id, payload, "data", append=True)
 
+            break
+        break
+
+
+    # average class area per image
+    class_area_nonzero = []
+    class_count_nonzero = []
+
+    images_with_count = []
+    images_with_count_text = []
+    images_without_count = []
+    images_without_count_text = []
+
+    unlabeled_col_name = 'unlabeled area %'
+    for name, color in zip([unlabeled_col_name, *class_names], [None, *class_colors]):
+        # print(name)
+        if name == unlabeled_col_name:
+            col_name = unlabeled_col_name
+        else:
+            col_name = color_name(area_name(name), color)
+
+        area_col = df_per_image_stats[col_name].copy()
+        area_col = area_col.replace(0, np.NaN)
+        area = area_col.mean(skipna=True)
+        class_area_nonzero.append(area if area is not np.NaN else 0)
+
+        count = np.NaN
+        if name == unlabeled_col_name:
+            count = np.NaN
+        else:
+            count_col = df_per_image_stats[color_name(count_name(name), color)].copy()
+            count_col = count_col.replace(0, np.NaN)
+            count = count_col.mean(skipna=True)
+        class_count_nonzero.append(count if count is not np.NaN else 0)
+
+        if name == unlabeled_col_name:
+            continue
+
+        without_count = count_col.isna().sum()
+        with_count = len(count_col) - without_count
+        images_with_count.append(with_count)
+        images_with_count_text.append("{} ({:.2f} %)".format(with_count, with_count * 100 / total_images_count))
+        images_without_count.append(without_count)
+        images_without_count_text.append(
+            "{} ({:.2f} %)".format(without_count, without_count * 100 / total_images_count))
+
+        # @TODO: uncomment (use only for debug)
+        #if with_count + without_count != total_images_count:
+        #    raise RuntimeError("Some images are missed")
+
+    fig = go.Figure(
+        data=[
+            go.Bar(name='Area %', x=[unlabeled_col_name, *class_names], y=class_area_nonzero, yaxis='y', offsetgroup=1),
+            go.Bar(name='Count', x=[unlabeled_col_name, *class_names], y=class_count_nonzero, yaxis='y2', offsetgroup=2)
+        ],
+        layout={
+            'yaxis': {'title': 'Area'},
+            'yaxis2': {'title': 'Count', 'overlaying': 'y', 'side': 'right'}
+        }
+    )
+    # Change the bar mode
+    fig.update_layout(barmode='group')
+    api.app.set_data(task_id, fig.to_json(), "data.classAreaDistr")
+
+    x = 10
 
 def main():
     table = []
-    for i in range(10):
-        table.append({"name": sly.rand_str(5), "my_value": i})
 
     # data
     data = {
         "tablePerImageStats": table,
-        "progress": 0
+        "progress": 0,
+        "classAreaDistr":  []
     }
 
     # state
     state = {
         "perPage": 25,
         "pageSizes": [25, 50, 100],
-        "processingFlag": True
+        "processingFlag": True,
+        "fixColumns": 2
     }
 
     # start event after successful service run

@@ -18,6 +18,15 @@
         <div slot="header" class="fflex">
             <el-progress v-if="state.processingFlag" style="width: 150px" :percentage="data.progress"></el-progress>
         </div>
-        <sly-table :options="{ perPage: state.perPage, pageSizes: state.pageSizes }" :content="data.tablePerImageStats"></sly-table>
+        <sly-table :options="{ perPage: state.perPage, pageSizes: state.pageSizes, fixColumns: state.fixColumns }" :content="data.tablePerImageStats"></sly-table>
     </card>
+
+    <card title="Average class area/count (only non-zero values)"
+          subtitle="Average labels area and count for every class across images which have this class"
+          v-loading="loading2"
+          element-loading-text="Loading..."
+          style="height:100%">
+        <!--<sly-plotly v-if="!state.show" :content="data.classAreaDistr" ></sly-plotly>-->
+    </card>
+
 </div>
