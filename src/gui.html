@@ -1,32 +1,19 @@
 <div>
     <card title="Per image stats" subtitle="Detailed objects and tags statistics for every image" style="height:100%">
-        <!--<div slot="header" class="fflex">-->
-          <!--&lt;!&ndash;<el-progress v-if="state.runClicked" style="width: 150px" :percentage="data.progress"></el-progress>&ndash;&gt;-->
-            <!--&lt;!&ndash;<el-button v-if="!state.needStop"&ndash;&gt;-->
-                       <!--&lt;!&ndash;size="small"&ndash;&gt;-->
-                       <!--&lt;!&ndash;:loading="state.runClicked"&ndash;&gt;-->
-                       <!--&lt;!&ndash;@click="state.runClicked = true; command('/workdir/srс/extract_fg_mask.py')">&ndash;&gt;-->
-              <!--&lt;!&ndash;<i v-if="!state.runClicked" class="zmdi zmdi-play"></i><span v-else>Running...</span>&ndash;&gt;-->
-            <!--&lt;!&ndash;</el-button>&ndash;&gt;-->
-              <!--&lt;!&ndash;<el-button v-if="state.runClicked"&ndash;&gt;-->
-                         <!--&lt;!&ndash;size="small"&ndash;&gt;-->
-                         <!--&lt;!&ndash;:loading="state.stopClicked"&ndash;&gt;-->
-                         <!--&lt;!&ndash;@click="state.stopClicked = true">&ndash;&gt;-->
-                <!--&lt;!&ndash;<i v-if="!state.needStop" class="zmdi zmdi-stop"></i><span v-else>Stopping...</span>&ndash;&gt;-->
-              <!--&lt;!&ndash;</el-button>&ndash;&gt;-->
-        <!--</div>-->
         <div slot="header" class="fflex">
-            <el-progress v-if="state.processingFlag" style="width: 150px" :percentage="data.progress"></el-progress>
+            <el-progress v-if="state.processingFlag" style="width: 350px" :percentage="data.progress"></el-progress>
         </div>
         <sly-table :options="{ perPage: state.perPage, pageSizes: state.pageSizes, fixColumns: state.fixColumns }" :content="data.tablePerImageStats"></sly-table>
     </card>
 
     <card title="Average class area/count (only non-zero values)"
           subtitle="Average labels area and count for every class across images which have this class"
-          v-loading="loading2"
-          element-loading-text="Loading..."
-          style="height:100%">
-        <!--<sly-plotly v-if="!state.show" :content="data.classAreaDistr" ></sly-plotly>-->
+          style="height:100%; margin-top: 15px;"
+          v-loading="data.loadingClassAreaDistr"
+          element-loading-text="Loading...">
+        <sly-plotly :content="data.classAreaDistr" ></sly-plotly>
     </card>
+
+
 
 </div>

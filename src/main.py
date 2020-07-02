@@ -224,9 +224,14 @@ def calculate(api: sly.Api, task_id, context, state):
     )
     # Change the bar mode
     fig.update_layout(barmode='group')
-    api.app.set_data(task_id, fig.to_json(), "data.classAreaDistr")
+    payload = {
+        "classAreaDistr": json.loads(fig.to_json()),
+        "loadingClassAreaDistr": False
+    }
+    api.app.set_data(task_id, payload, "data", append=True)
 
     x = 10
+
 
 def main():
     table = []
@@ -235,7 +240,8 @@ def main():
     data = {
         "tablePerImageStats": table,
         "progress": 0,
-        "classAreaDistr":  []
+        "classAreaDistr":  [],
+        "loadingClassAreaDistr": True
     }
 
     # state
@@ -243,7 +249,8 @@ def main():
         "perPage": 25,
         "pageSizes": [25, 50, 100],
         "processingFlag": True,
-        "fixColumns": 2
+        "fixColumns": 2,
+
     }
 
     # start event after successful service run
