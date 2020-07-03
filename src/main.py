@@ -154,11 +154,10 @@ def calculate(api: sly.Api, task_id, context, state):
                 df_per_image_stats = pd.concat([df_per_image_stats, df], ignore_index=True, sort=False)
 
             # refresh table and progress
-            payload = {
-                "progress": int(len(table_per_image_stats) / total_images_count * 100),
-                "tablePerImageStats": processed_table_part
-            }
-            api.app.set_data(task_id, payload, "data", append=True)
+            api.app.set_data(task_id, processed_table_part, "data.tablePerImageStats", append=True)
+
+            progress = int(len(table_per_image_stats) / total_images_count * 100)
+            api.app.set_data(task_id, progress, "data.progress")
 
     # ==================================================================================================================
     # average class area per image
