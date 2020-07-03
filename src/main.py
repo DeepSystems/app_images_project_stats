@@ -1,10 +1,8 @@
-from collections import defaultdict
 import numpy as np
 import pandas as pd
 import json
 import plotly.express as px
 import plotly.graph_objects as go
-import plotly.offline as po
 
 import supervisely_lib as sly
 
@@ -88,7 +86,7 @@ def calculate(api: sly.Api, task_id, context, state):
     for name, color in zip(class_names, class_colors):
         classes_cols.append(color_name(area_name(name), color))
         classes_cols.append(color_name(count_name(name), color))
-    tags_cols = []
+    tags_cols = ['any tag']
     for name, color in zip(tag_names, tag_colors):
         tags_cols.append(color_tag_name(name, color))
 
@@ -162,11 +160,9 @@ def calculate(api: sly.Api, task_id, context, state):
             }
             api.app.set_data(task_id, payload, "data", append=True)
 
-            break
-        break
-
-
+    # ==================================================================================================================
     # average class area per image
+    # ==================================================================================================================
     class_area_nonzero = []
     class_count_nonzero = []
 
@@ -222,7 +218,6 @@ def calculate(api: sly.Api, task_id, context, state):
             'yaxis2': {'title': 'Count', 'overlaying': 'y', 'side': 'right'}
         }
     )
-    # Change the bar mode
     fig.update_layout(barmode='group')
     payload = {
         "classAreaDistr": json.loads(fig.to_json()),
@@ -230,7 +225,90 @@ def calculate(api: sly.Api, task_id, context, state):
     }
     api.app.set_data(task_id, payload, "data", append=True)
 
-    x = 10
+    # ==================================================================================================================
+    # images count with/without classes
+    # ==================================================================================================================
+    fig_with_without_count = go.Figure(
+        data=[
+            go.Bar(name='# of images that have class', x=class_names, y=images_with_count, text=images_with_count_text),
+            go.Bar(name='# of images that do not have class', x=class_names, y=images_without_count,
+                   text=images_without_count_text)
+        ],
+    )
+    fig_with_without_count.update_layout(barmode='stack')  # , legend_orientation="h")
+    payload = {
+        "classOnImageCount": json.loads(fig_with_without_count.to_json()),
+        "loadingClassOnImageCount": False
+    }
+    api.app.set_data(task_id, payload, "data", append=True)
+
+    # ==================================================================================================================
+    # images with without tags
+    # ==================================================================================================================
+    if len(tag_names) != 0:
+        col_tags_count = 'any tag'
+        # images with without tags
+        images_with_tag_count = []
+        images_with_tag_count_text = []
+
+        images_without_tag_count = []
+        images_without_tag_count_text = []
+        for name, color in zip([col_tags_count, *tag_names], [None, *tag_colors]):
+            if name != col_tags_count:
+                name = color_tag_name(name, color)
+            tag_col = df_per_image_stats[name].copy()
+            tag_col = df_per_image_stats[tag_col > 0]
+
+            with_tag = len(tag_col)
+            images_with_tag_count.append(with_tag)
+            images_with_tag_count_text.append(
+                "{} ({:.2f} %)".format(with_tag, with_tag * 100 / total_images_count))
+
+            without_tag = total_images_count - with_tag
+            images_without_tag_count.append(without_tag)
+            images_without_tag_count_text.append(
+                "{} ({:.2f} %)".format(without_tag, without_tag * 100 / total_images_count))
+
+        fig_tag_with_without_count = go.Figure(
+            data=[
+                go.Bar(name='# of images that have tag',
+                       x=[col_tags_count, *tag_names], y=images_with_tag_count,
+                       text=images_with_tag_count_text),
+                go.Bar(name='# of images that do not have tag',
+                       x=[col_tags_count, *tag_names], y=images_without_tag_count,
+                       text=images_without_tag_count_text)
+            ],
+        )
+        fig_tag_with_without_count.update_layout(barmode='stack')
+
+        payload = {
+            "tagOnImageCount": json.loads(fig_tag_with_without_count.to_json()),
+            "loadingTagOnImageCount": False
+        }
+        api.app.set_data(task_id, payload, "data", append=True)
+
+    # ==================================================================================================================
+    # images resolution (piechart)
+    # ==================================================================================================================
+    df_per_image_stats["resolution"] = df_per_image_stats["height"].astype(str) + " x " \
+                                       + df_per_image_stats["width"].astype(str) + " x " \
+                                       + df_per_image_stats["channels"].astype(str)
+
+    labels = df_per_image_stats["resolution"].value_counts().index
+    values = df_per_image_stats["resolution"].value_counts().values
+
+    df_resolution = pd.DataFrame({'resolution': labels, 'count': values})
+    df_resolution['percent'] = df_resolution['count'] / df_resolution['count'].sum() * 100
+    # df_resolution['percent'].apply("{:.2f}".format)
+    # df_resolution = df_resolution.sort_values('percent', ascending=False)
+    df_resolution.loc[df_resolution.index > 10, 'resolution'] = 'other'
+
+    pie_resolution = px.pie(df_resolution, names='resolution', values='count')  # labels='text')
+    payload = {
+        "imageResolutionDistr": json.loads(pie_resolution.to_json()),
+        "loadingImageResolutionDistr": False
+    }
+    api.app.set_data(task_id, payload, "data", append=True)
 
 
 def main():
@@ -240,8 +318,18 @@ def main():
     data = {
         "tablePerImageStats": table,
         "progress": 0,
-        "classAreaDistr":  [],
-        "loadingClassAreaDistr": True
+
+        "classAreaDistr":  {},
+        "loadingClassAreaDistr": True,
+
+        "classOnImageCount": {},
+        "loadingClassOnImageCount": True,
+
+        "tagOnImageCount": {},
+        "loadingTagOnImageCount": True,
+
+        "imageResolutionDistr": {},
+        "loadingImageResolutionDistr": True
     }
 
     # state

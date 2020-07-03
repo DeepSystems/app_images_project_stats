@@ -8,12 +8,26 @@
 
     <card title="Average class area/count (only non-zero values)"
           subtitle="Average labels area and count for every class across images which have this class"
-          style="height:100%; margin-top: 15px;"
-          v-loading="data.loadingClassAreaDistr"
-          element-loading-text="Loading...">
-        <sly-plotly :content="data.classAreaDistr" ></sly-plotly>
+          style="height:100%; margin-top: 15px;">
+        <sly-plotly v-loading="data.loadingClassAreaDistr" element-loading-text="Will be calculated after the per image stats table" :content="data.classAreaDistr" ></sly-plotly>
     </card>
 
+    <card title="Number of images with/without specific class"
+          subtitle="For every class two values are calculated: how many images have / don't have a specific class"
+          style="height:100%; margin-top: 15px;">
+        <sly-plotly v-loading="data.loadingClassOnImageCount" element-loading-text="Will be calculated after the per image stats table" :content="data.classOnImageCount" ></sly-plotly>
+    </card>
 
+    <card title="Number of images with/without specific tag"
+          subtitle="For every tag two values are calculated: how many images have / don't have a specific tag"
+          style="height:100%; margin-top: 15px;">
+        <sly-plotly v-loading="data.loadingTagOnImageCount" element-loading-text="Will be calculated after the per image stats table" :content="data.tagOnImageCount" ></sly-plotly>
+    </card>
+
+    <card title="Images resolutions (height x width x channels)"
+          subtitle="Image resolutions distribution"
+          style="height:100%; margin-top: 15px;">
+        <sly-plotly v-loading="data.loadingImageResolutionDistr" element-loading-text="Will be calculated after the per image stats table" :content="data.imageResolutionDistr" ></sly-plotly>
+    </card>
 
 </div>
