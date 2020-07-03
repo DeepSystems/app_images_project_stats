@@ -3,6 +3,7 @@ import pandas as pd
 import json
 import plotly.express as px
 import plotly.graph_objects as go
+import sys
 
 import supervisely_lib as sly
 
@@ -36,6 +37,11 @@ def rename_fields(data, old_names, new_name_func, colors=None, color_func=None):
                 new_name = color_func(new_name, color)
             data[new_name] = data[name]
             del data[name]
+
+
+@my_app.callback(sly.app.STOP_COMMAND)
+def stop(api: sly.Api, task_id, context, state):
+    sys.exit(0)
 
 
 @my_app.callback("calculate")
